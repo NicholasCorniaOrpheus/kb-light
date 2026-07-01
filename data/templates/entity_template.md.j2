@@ -1,0 +1,20 @@
+# {{ entity.filename }} 
+
+{{ entity.markdown_content }}
+
+---
+## Statements
+
+{% for property, values in entity.properties.items() %}
+??? info "{{ property }}"
+    {% for item in values %}
+    - **{{ item.value }}**
+      {% if item.qualifiers %}
+      <div style="margin-left: 20px; border-left: 1px solid #eee; padding-left: 10px;">
+        {% for q_prop, q_val in item.qualifiers.items() %}
+        - *{{ q_prop }}*: {{ q_val }}
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endfor %}
+{% endfor %}

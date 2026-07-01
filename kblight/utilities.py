@@ -2,11 +2,14 @@
 Basic utilities scripts
 """
 import json, csv
+from json import JSONEncoder
 import pandas as pd
+import datetime
 from time import gmtime, strftime, time
 import math
 import os
 import requests
+import yaml
 
 # UUID libraries
 import uuid
@@ -32,6 +35,17 @@ def truncated_uuid(length=12):
     return truncated_id
 
 
+def yaml2dict(yml_path, encoding="utf-8"):
+    with open(yml_path, "r", encoding=encoding) as f:
+        entity_data = yaml.safe_load(f)
+    return entity_data
+
+
+def dict2yaml(d, yml_path, encoding="utf-8", allow_unicode=True, sort_keys=False):
+    with open(yml_path, "w", encoding=encoding) as f:
+        yaml.dump(d, f, allow_unicode=allow_unicode, sort_keys=sort_keys)
+
+
 def csv2dict(csv_filename, encoding="utf-8-sig", orient="records", na_values=""):
     df = pd.read_csv(csv_filename, encoding=encoding)
     df = df.fillna(na_values)
@@ -50,11 +64,18 @@ def json2dict(json_filename):  # imports a JSON file as dictionary
         return json_file
 
 
-def dict2json(
-    d, json_filename, ensure_ascii=False, indent=2
-):  # export a dictionary to JSON file
+def dict2json(d, json_filename, ensure_ascii=False, indent=2):
+    # export a dictionary to JSON file
+    class DateTimeEncoder(JSONEncoder):
+        # Override the default method
+        def default(self, obj):
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                return obj.isoformat()
+
     with open(json_filename, "w") as json_file:
-        json.dump(d, json_file, indent=indent, ensure_ascii=ensure_ascii)
+        json.dump(
+            d, json_file, indent=indent, ensure_ascii=ensure_ascii, cls=DateTimeEncoder
+        )
 
 
 def get_current_date():

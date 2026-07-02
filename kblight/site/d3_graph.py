@@ -2,11 +2,6 @@ import re
 from pathlib import Path
 import json
 
-import pandas as pd
-import re
-from pathlib import Path
-import json
-
 from kblight import utilities
 
 
@@ -24,6 +19,9 @@ def generate_global_network(
 
     nodes_registry = {}  # uri -> {node_data}
     links = []  # list of {source, target, property}
+
+    # Pre-compile regex for efficiency
+    entity_uri_pattern = re.compile(re.escape(base_url) + r"\w+")
 
     # 1. Global Crawl to define all Nodes and Edges
     for file in yaml_dir.glob("*.y*ml"):
@@ -77,12 +75,18 @@ def generate_global_network(
                 find_links(val, prop)
 
         # Retrieve entities from Markdown content
-        page_content_list = data["content"]["markdown_content"].split(" ")
-        # find internal links
-        r = re.compile(base_url)
-        search_query = list(filter(r.match, page_content_list))
-        for element in search_query:
-            links.append({"source": entity_uri, "target": element, "property": ""})
+        markdown_content = data.get("content", {}).get("markdown_content", "")
+        if markdown_content:
+            # Find all entity URIs in the markdown content
+            found_uris = entity_uri_pattern.findall(markdown_content)
+            for found_uri in found_uris:
+                links.append(
+                    {
+                        "source": entity_uri,
+                        "target": found_uri,
+                        "property": "related_to",
+                    }
+                )
 
     # 2. Cleanup: Ensure all link targets exist as nodes
     # If a target URI was mentioned but the file is missing, create a placeholder node
@@ -108,38 +112,52 @@ def generate_backlinks_graphs(
     Generates for each entity a D3.js compatible graph given the complete graph.
     """
     graph_dir = Path(graph_dir)
+    graph_dir.mkdir(parents=True, exist_ok=True)
+
     # Import whole graph
     G = utilities.json2dict(graph_json)
 
-    for node in G.get("nodes"):
+    for node in G.get("nodes", []):
         g = {"nodes": [node]}
+
         # filter all links that have the node as source
-        g["links"] = list(filter(lambda x: x["source"] == node["id"], G.get("links")))
+        g["links"] = [l for l in G.get("links", []) if l["source"] == node["id"]]
+
         # filter all links that have the node as target
-        g["links"] += list(filter(lambda x: x["target"] == node["id"], G.get("links")))
-        neighbour_nodes = list(set([link["target"] for link in g["links"]]))
-        neighbour_nodes += list(set([link["source"] for link in g["links"]]))
-        # retrieve target nodes from main graph and append them to local one
-        g["nodes"] += list(filter(lambda x: x["id"] in neighbour_nodes, G["nodes"]))
-        # add extra links between neighbour_nodes
-        nodes_list = [node["id"] for node in g["nodes"]]
-        all_nodes_links = list(
-            filter(lambda x: x["source"] in nodes_list, G.get("links"))
+        g["links"] += [l for l in G.get("links", []) if l["target"] == node["id"]]
+
+        # Get unique neighbor node IDs
+        neighbour_ids = set(
+            [link["target"] for link in g["links"]]
+            + [link["source"] for link in g["links"]]
         )
-        neighbour_nodes_links = [
-            link for link in all_nodes_links if link["target"] in nodes_list
+
+        # Retrieve neighbor node data from main graph
+        neighbour_nodes = [n for n in G["nodes"] if n["id"] in neighbour_ids]
+        g["nodes"] += neighbour_nodes
+
+        # Add links between neighbors
+        nodes_list = [node["id"] for node in g["nodes"]]
+        g["links"] += [
+            link
+            for link in G.get("links", [])
+            if link["source"] in nodes_list and link["target"] in nodes_list
         ]
 
-        g["links"] += neighbour_nodes_links
+        # ✅ IMPROVED: Remove duplicates without pandas using dict + set
+        # Remove duplicate nodes (by id)
+        seen_nodes = {}
+        for node_item in g["nodes"]:
+            seen_nodes[node_item["id"]] = node_item
+        g["nodes"] = list(seen_nodes.values())
 
-        # remove duplicate nodes
-        df = pd.DataFrame(g["nodes"])
-        df = df.drop_duplicates()
-        g["nodes"] = df.to_dict(orient="records")
-        # remove duplicate links
-        df = pd.DataFrame(g["links"])
-        df = df.drop_duplicates()
-        g["links"] = df.to_dict(orient="records")
+        # Remove duplicate links (by source + target + property tuple)
+        seen_links = {}
+        for link in g["links"]:
+            link_key = (link["source"], link["target"], link.get("property", ""))
+            seen_links[link_key] = link
+        g["links"] = list(seen_links.values())
+
         # save graph locally
-        file_path = graph_dir / f"{g['nodes'][0]['id'].split('/')[-1]}.json"
+        file_path = graph_dir / f"{node['id'].split('/')[-1]}.json"
         utilities.dict2json(g, file_path)

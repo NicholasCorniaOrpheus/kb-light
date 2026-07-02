@@ -2,13 +2,14 @@ from pathlib import Path
 
 from kblight import utilities
 import math
+import dpath
 
 
 def extract_assets_from_local_paths(
     yaml_dir: str | Path,
     vault_path: str | Path,
     vault_base_url: str,
-    IIIF_manifest="has_version/IIIF_manifest",
+    IIIF_manifest_path="has_version/IIIF_manifest",
     assets_path="local_asset_path",
 ):
     """
@@ -30,27 +31,32 @@ def extract_assets_from_local_paths(
         if entity.get("assets") is None:
             entity["assets"] = {}
 
-        # 1. Extract IIIF_manifest from nested statements
-        IIIF_keys = IIIF_manifest.split("/")
-        current_val = entity["statements"]
-
+        # 1. Extract IIIF_manifest from nested statements (only depth 2 is allowed)
+        IIIF_keys = IIIF_manifest_path.split("/")
+        IIIF_value = None
         try:
-            for key in IIIF_keys:
-                # FIX 2: Handle the 'has_version' LIST structure
-                # In your Factoid model, has_version is a list of dicts [Conversation History]
-                if isinstance(current_val, list) and len(current_val) > 0:
-                    current_val = current_val  # Take first version's manifest
-
-                if isinstance(current_val, dict):
-                    current_val = current_val.get(key)
+            if len(IIIF_keys) == 0:
+                pass
+            elif len(IIIF_keys) == 1:
+                # extract IIIF value directly
+                IIIF_value = entity["statements"].get(IIIF_keys[0])
+            elif len(IIIF_keys) == 2:
+                # nested case
+                # check if we have a lsit or dict structure
+                if isinstance(entity["statements"][IIIF_keys[0]], list):
+                    for elem in entity["statements"][IIIF_keys[0]]:
+                        if IIIF_keys[1] in elem.keys():
+                            IIIF_value = elem[IIIF_keys[1]]
+                            break
                 else:
-                    current_val = None
-                    break
+                    IIIF_value = entity["statements"][IIIF_keys[0]].get(IIIF_keys[1])
+            else:
+                # ignore more nested values
+                pass
+        except Exception as e:
+            pass
 
-            # Store found manifest or leave as None
-            entity["assets"]["IIIF_manifest"] = current_val
-        except Exception:
-            entity["assets"]["IIIF_manifest"] = None
+        entity["assets"]["iiif"] = IIIF_value
 
         # 2. Collect local files from vault based on extension
         local_rel_path = entity["assets"].get(assets_path)

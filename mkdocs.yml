@@ -1,24 +1,25 @@
-site_name: your kblight_site
-site_author: Name and Surname
-repo_url: https://github.com/{GitHubUser}/{repository_name}
-nav:
+site_name: KB-light - Knowledge Base light powered by Obsidian Markdown vault
+site_author: Nicholas Cornia
+site_url: https://nicholascorniaorpheus.github.io/kb-light
+repo_url: https://github.com/nicholascorniaorpheus/kb-light
+
+# Create your custom pages in docs/ folder
+nav: 
   - Home: index.md
-  - Explore: explore.md
-  - Contributors: contributors.md
-  - References: references.md
+  - Installation: installation.md
+  - Tutorials: tutorials.md
+  - API Documentation: api_documentation.md
 
 plugins:
   - search
+  - mkdocstrings
 
-#extra_css:
-  #- assets/stylesheets/extra.css
+extra_css:
+  - assets/css/extras.css
 
-#extra_javascript:
-  #- assets/javascripts/extra.js
 
 theme:
   name: material
-  custom_dir: overrides
   language: en
   icon:
     previous: fontawesome/solid/angle-left
@@ -29,27 +30,13 @@ theme:
       quote: fontawesome/solid/quote-left
 
   font:
-      text: Sofia Sans
+      text: Crimson Pro
   palette:
-    # Palette toggle for light mode
-    #- scheme: default
-      #primary: custom
-      #default: custom
-      #footer: custom
-      #accent: custom
-      #toggle:
-        #icon: material/weather-night
-        #name: Switch to dark mode
-
-    # Palette toggle for dark mode
-    - scheme: slate
-      primary: deep purple
-      default: deep purple
-      footer: deep purple
-      accent: deep purple
-      #toggle:
-        #icon: material/weather-sunny
-        #name: Switch to light mode        
+    - scheme: default
+      primary: custom
+      default: custom
+      footer: custom
+      accent: custom       
 
   features:
     - navigation.instant
@@ -59,9 +46,7 @@ theme:
     - navigation.expand
     - navigation.prune
     - search.share
-    - search.suggest
     - toc.integrate
-    - content.code.copy
     #- navigation.footer
     #- navigation.tabs
     #- navigation.tabs.sticky
@@ -74,7 +59,7 @@ copyright: Copyright &copy; 2026 Orpheus Instituut, Resounding Libraries
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/NicholasCorniaOrpheus
+      link: https://github.com/NicholasCorniaOrpheus/py-resounding-libraries
       name: GitHub repository
   social:
     - icon: material/music-note
@@ -85,7 +70,6 @@ markdown_extensions:
   - footnotes
   - tables
   - attr_list
-  - admonition
   - md_in_html
   - admonition
   - pymdownx.details

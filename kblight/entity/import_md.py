@@ -70,6 +70,10 @@ def extract_metadata(
                     # add numerical_id for bisect search
                     metadata["n_id"] = shortuuid.decode(metadata["id"]).int
 
+                    # Default class to Thing if not present
+                    if "class" is not in metadata.keys():
+                        metadata["class"] = ""
+
                     # Add content as field
                     metadata["markdown_content"] = page.content
 
@@ -109,6 +113,10 @@ def extract_metadata(
                         metadata["id"] = utilities.truncated_uuid(id_length)
                         # add numerical_id for bisect search
                         metadata["n_id"] = shortuuid.decode(metadata["id"]).int
+
+                        # Default class to Thing if not present
+                        if "class" is not in metadata.keys():
+                            metadata["class"] = ""
 
                         # Add content as field
                         metadata["markdown_content"] = page.content

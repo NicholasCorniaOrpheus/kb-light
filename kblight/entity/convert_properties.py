@@ -11,6 +11,7 @@ For example property author --> contributor: {value: , role: [[author]]}
 """
 
 
+# STILL IN DEVELOPMENT!
 def convert_md_properties(
     vault_dir: str | Path = "./vault",
     output_dir: str | Path = "./converted_vault",

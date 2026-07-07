@@ -5,7 +5,7 @@ Uses RDF 1.1 reification only when necessary (multiple qualifiers).
 Falls back to simple triples for factoids with only 'value' and 'label'.
 """
 
-from rdflib import Graph, URIRef, Literal, Namespace
+from rdflib import Graph, URIRef, Literal, Namespace, BNode
 from rdflib.namespace import RDF, XSD, RDFS
 import os
 from datetime import date, datetime
@@ -49,6 +49,11 @@ def rdf_serialization(
     statements = entity.get("statements", {})
     if statements:
         _convert_statements(g, statements, properties_mapping, subject_uri, base_url)
+
+    # Also convert metadatas
+    _convert_statements(
+        g, entity.get("metadata", {}), properties_mapping, subject_uri, base_url
+    )
 
     # Serialize
     os.makedirs(output_dir, exist_ok=True)
@@ -223,7 +228,8 @@ def _convert_statements(g, statements, mappings, subject, base_url):
             if data_type == "Statement" and isinstance(val_item, dict):
                 main_val = val_item.get("value")
                 if main_val is None:
-                    continue
+                    # create blank node
+                    main_val = None
 
                 # Decide: simple triple or reification?
                 has_quals = _has_qualifiers(val_item)
@@ -248,11 +254,14 @@ def _convert_statements(g, statements, mappings, subject, base_url):
 
                     # Main value as object
                     main_map = _get_mapping(f"{yaml_prop}/value", mappings)
+                    if main_map is None:
+                        # use yaml_prop instead
+                        main_map = _get_mapping(yaml_prop, mappings)
                     main_type = (
                         main_map.get("data_type", "String") if main_map else "String"
                     )
 
-                    if main_val:
+                    if main_val is not None:
                         _add_triple(
                             g, stmt_uri, RDF.object, main_val, main_type, base_url
                         )
@@ -262,6 +271,12 @@ def _convert_statements(g, statements, mappings, subject, base_url):
                             uri = _make_uri(main_val, main_type, base_url)
                             if uri:
                                 g.add((subject, pred_uri, uri))
+
+                    else:  # blanknode case
+                        blank_node = BNode()
+                        _add_triple(
+                            g, stmt_uri, RDF.object, blank_node, main_type, base_url
+                        )
 
                     # Qualifiers
                     for qual_key, qual_val in val_item.items():

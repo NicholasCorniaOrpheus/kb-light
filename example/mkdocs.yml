@@ -1,0 +1,86 @@
+site_name: your kblight_site
+site_author: Name and Surname
+site_url: https://{GitHubUser}.github.io/{repositoryName}
+repo_url: https://github.com/{GitHubUser}/{repositoryName}
+
+# Create your custom pages in docs/ folder
+nav: 
+  - Home: index.md
+  - Explore: explore.md
+  - Contributors: contributors.md
+  - References: references.md
+
+# Allow built-in Lunr.js search
+plugins: 
+  - search
+
+# Extra CSS for custom colors and fonts. See [example file]()
+extra_css:
+  - assets/css/extras.css
+
+# Extra Javascripts for TEI visualization (CETEI.js), assets and graph network visualization (OpenSeadragon and D3.js via kb-init.js)
+extra_javascript:
+  - assets/js/CETEI.js
+  - https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js
+  - https://d3js.org/d3.v7.min.js 
+  - assets/js/kb-init.js
+
+theme:
+  name: material
+  language: en
+  icon:
+    previous: fontawesome/solid/angle-left
+    next: fontawesome/solid/angle-right
+    admonition:
+      abstract: fontawesome/solid/book
+      note: fontawesome/solid/note-sticky
+      quote: fontawesome/solid/quote-left
+
+  font:
+      text: Crimson Pro
+  palette:
+    - scheme: default
+      primary: custom
+      default: custom
+      footer: custom
+      accent: amber
+      
+  features:
+    #- navigation.instant (KEEP DEACTIVATE TO PREVENT LOADING FAILURE IN D3.js and OpenSeadragon )
+    #- navigation.instant.prefetch
+    #- navigation.instant.progress
+    #- navigation.sections
+    #- navigation.expand
+    - navigation.prune
+    - search.share
+    #- toc.integrate
+    - toc.follow
+
+
+copyright: Copyright &copy; 2026
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/{GitHubUser}
+      name: GitHub repository
+  social:
+    - icon: material/music-note
+      link: {your_URL}
+      name: {your_name}
+
+markdown_extensions:
+  - footnotes
+  - tables
+  - attr_list
+  - admonition
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  # icons extension!
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
